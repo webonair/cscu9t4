@@ -4,6 +4,8 @@ import java.awt.event.*;
 import java.util.*;
 import javax.swing.*;
 import java.lang.Number;
+import java.text.SimpleDateFormat;  
+import java.util.Date;  
 
 /**
  * 
@@ -27,19 +29,38 @@ public class FilesInOut {
     	// This declaration belongs outside the try statement because I'll use it later on.
     	StringBuffer sb = new StringBuffer();
     	
-    	// Reading and altering inFile with regex
+    	// Searching arguments for the -u flag
+    	boolean upper = false;
+    	for (String s: args) {
+    		if (s.equals("-u")) {
+    			upper = true;
+    		}
+    	}
+    	
+    	
+    	// Reading and altering inFile with regexes
         try {
            FileReader fr = new FileReader (inFile);
            BufferedReader br = new BufferedReader(fr);
            
            String line;
 
-           // I don't know what the "output format" is exactly.
-           // I'm assuming it's to remove middle initials from students' names to match input.txt.
-           // I'm also assuming it should be a table, so I did that too.
            while ( (line = br.readLine()) != null ) {
-        	   line = line.replaceAll(" . ", " ");  // Removes initials
         	   line = line.replaceAll(" [0-9]", "\t"); // Adds white space
+        	   line = line.replaceAll(" (.) ", " $1. "); // Adds middle initial dot
+        	   
+        	   // Date format for end-of-line substring.  Not good
+        	   String bdaysub = line.substring((line.length() - 8), line.length());
+        	   bdaysub = bDayBuilder(bdaysub);
+        	   line = line.replaceAll("........$", bdaysub);
+        	   
+        	   
+        	   if (upper) {
+        	   		line = line.toUpperCase();
+        	   } else {
+        	   		line = toTitleCase(line);
+        	   }
+        	   
         	   sb.append(line);
         	   sb.append("\n");
            }
@@ -65,6 +86,36 @@ public class FilesInOut {
           }
 
     } // main
+    
+    // Converts to title case
+    public static String toTitleCase(String line) {
+    	StringBuilder titlec = new StringBuilder();
+
+        boolean convertNext = true;
+        for (char ch : line.toCharArray()) {
+            if (Character.isSpaceChar(ch)) {
+                convertNext = true;
+            } else if (convertNext) {
+                ch = Character.toTitleCase(ch);
+                convertNext = false;
+            } else {
+                ch = Character.toLowerCase(ch);
+            }
+            titlec.append(ch);
+        }
+
+        return titlec.toString();
+    }
+    
+    public static String bDayBuilder(String line) {
+    	String result;
+    	
+    	StringBuilder bdayb = new StringBuilder(line);
+    	result = bdayb.insert(line.length()-4, "/").toString();
+    	result = bdayb.insert(line.length()-6, "/").toString();
+    	
+    	return result;
+    }
     
     // Basic but obligatory error handling
     public static void ioe (IOException e) {
